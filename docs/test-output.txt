@@ -1,0 +1,20 @@
+test_determinism_and_seed_variation (tests.test_core.WorldTests.test_determinism_and_seed_variation) ... ok
+test_full_log_replay_and_day_seek (tests.test_core.WorldTests.test_full_log_replay_and_day_seek) ... ok
+test_invalid_actions_are_atomic (tests.test_core.WorldTests.test_invalid_actions_are_atomic) ... ok
+test_npc_and_player_share_rules_and_daily_budget (tests.test_core.WorldTests.test_npc_and_player_share_rules_and_daily_budget) ... ok
+test_npc_responds_to_local_offers (tests.test_core.WorldTests.test_npc_responds_to_local_offers) ... ok
+test_population_and_private_observation (tests.test_core.WorldTests.test_population_and_private_observation) ... ok
+test_rain_and_diversion_change_real_harvest (tests.test_core.WorldTests.test_rain_and_diversion_change_real_harvest) ... ok
+test_replay_rejects_tampering_and_missing_events (tests.test_core.WorldTests.test_replay_rejects_tampering_and_missing_events) ... ok
+test_save_resume_preserves_future_and_log_chain (tests.test_core.WorldTests.test_save_resume_preserves_future_and_log_chain) ... ok
+test_seasons_and_drought_window (tests.test_core.WorldTests.test_seasons_and_drought_window) ... ok
+test_transfer_and_trade_conserve_resources (tests.test_core.WorldTests.test_transfer_and_trade_conserve_resources) ... ok
+test_transfer_has_subsequent_effect_and_source (tests.test_core.WorldTests.test_transfer_has_subsequent_effect_and_source) ... ok
+test_years_of_autonomy_keep_ledgers_balanced (tests.test_core.WorldTests.test_years_of_autonomy_keep_ledgers_balanced) ... ok
+test_cli_simulation_replay_and_scheduled_inputs (tests.test_interfaces.InterfaceTests.test_cli_simulation_replay_and_scheduled_inputs) ... ok
+test_http_map_actions_validation_and_checkpoint (tests.test_interfaces.InterfaceTests.test_http_map_actions_validation_and_checkpoint) ... ok
+
+----------------------------------------------------------------------
+Ran 15 tests in 16.417s
+
+OK

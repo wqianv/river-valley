@@ -1,0 +1,328 @@
+{
+  "day": 3600,
+  "years": 10.0,
+  "seed": 42,
+  "scenario": "normal",
+  "population": 121,
+  "households": 40,
+  "grain": 136975,
+  "harvest": 562875,
+  "consumed": 435600,
+  "hunger_days": 0,
+  "thirst_days": 0,
+  "villages": {
+    "upstream": {
+      "grain": 62925,
+      "harvest": 277625,
+      "hunger_days": 0
+    },
+    "downstream": {
+      "grain": 74050,
+      "harvest": 285250,
+      "hunger_days": 0
+    }
+  },
+  "state_hash": "70dbb90e0629a19c0b70ed856f3fc4cec6c2fc5c938b61ac2dd153fd6ba63178",
+  "events": 82803,
+  "elapsed_seconds": 18.7258,
+  "history": [
+    {
+      "day": 0,
+      "years": 0.0,
+      "seed": 42,
+      "scenario": "normal",
+      "population": 121,
+      "households": 40,
+      "grain": 12100,
+      "harvest": 0,
+      "consumed": 0,
+      "hunger_days": 0,
+      "thirst_days": 0,
+      "villages": {
+        "upstream": {
+          "grain": 6100,
+          "harvest": 0,
+          "hunger_days": 0
+        },
+        "downstream": {
+          "grain": 6000,
+          "harvest": 0,
+          "hunger_days": 0
+        }
+      },
+      "state_hash": "567a0d3ccf53eec1da3b8dbe1d1c2742f018889f541af467eef62b88b8c2859b",
+      "events": 1
+    },
+    {
+      "day": 360,
+      "years": 1.0,
+      "seed": 42,
+      "scenario": "normal",
+      "population": 121,
+      "households": 40,
+      "grain": 24632,
+      "harvest": 56332,
+      "consumed": 43560,
+      "hunger_days": 0,
+      "thirst_days": 0,
+      "villages": {
+        "upstream": {
+          "grain": 11807,
+          "harvest": 27787,
+          "hunger_days": 0
+        },
+        "downstream": {
+          "grain": 12825,
+          "harvest": 28545,
+          "hunger_days": 0
+        }
+      },
+      "state_hash": "38a87b513afa96854d1f0fc1a2f1a29c514f9c6be94623cea5846c995d190f45",
+      "events": 8283
+    },
+    {
+      "day": 720,
+      "years": 2.0,
+      "seed": 42,
+      "scenario": "normal",
+      "population": 121,
+      "households": 40,
+      "grain": 37121,
+      "harvest": 112621,
+      "consumed": 87120,
+      "hunger_days": 0,
+      "thirst_days": 0,
+      "villages": {
+        "upstream": {
+          "grain": 17490,
+          "harvest": 55550,
+          "hunger_days": 0
+        },
+        "downstream": {
+          "grain": 19631,
+          "harvest": 57071,
+          "hunger_days": 0
+        }
+      },
+      "state_hash": "a8582e9ad06b2e7ed47d4eade917c270862123dc633b488360b9a5e923b30c17",
+      "events": 16563
+    },
+    {
+      "day": 1080,
+      "years": 3.0,
+      "seed": 42,
+      "scenario": "normal",
+      "population": 121,
+      "households": 40,
+      "grain": 49882,
+      "harvest": 169182,
+      "consumed": 130680,
+      "hunger_days": 0,
+      "thirst_days": 0,
+      "villages": {
+        "upstream": {
+          "grain": 23309,
+          "harvest": 83449,
+          "hunger_days": 0
+        },
+        "downstream": {
+          "grain": 26573,
+          "harvest": 85733,
+          "hunger_days": 0
+        }
+      },
+      "state_hash": "5ab9dfad1c36f86d49a188d198a9a1324f4cc0eb7670d48284b7137ba12cc7ba",
+      "events": 24843
+    },
+    {
+      "day": 1440,
+      "years": 4.0,
+      "seed": 42,
+      "scenario": "normal",
+      "population": 121,
+      "households": 40,
+      "grain": 62479,
+      "harvest": 225579,
+      "consumed": 174240,
+      "hunger_days": 0,
+      "thirst_days": 0,
+      "villages": {
+        "upstream": {
+          "grain": 29047,
+          "harvest": 111267,
+          "hunger_days": 0
+        },
+        "downstream": {
+          "grain": 33432,
+          "harvest": 114312,
+          "hunger_days": 0
+        }
+      },
+      "state_hash": "2b1335979e6d5de0b2cb33b41a8ee7d1ebf319aa9219bd179ff4a5120e140dd1",
+      "events": 33123
+    },
+    {
+      "day": 1800,
+      "years": 5.0,
+      "seed": 42,
+      "scenario": "normal",
+      "population": 121,
+      "households": 40,
+      "grain": 74904,
+      "harvest": 281804,
+      "consumed": 217800,
+      "hunger_days": 0,
+      "thirst_days": 0,
+      "villages": {
+        "upstream": {
+          "grain": 34700,
+          "harvest": 139000,
+          "hunger_days": 0
+        },
+        "downstream": {
+          "grain": 40204,
+          "harvest": 142804,
+          "hunger_days": 0
+        }
+      },
+      "state_hash": "b6bedbaf0e667e8f61f5a2d632ff46bdb4e24c8158aa556c0b55cdaa0bb6a22c",
+      "events": 41403
+    },
+    {
+      "day": 2160,
+      "years": 6.0,
+      "seed": 42,
+      "scenario": "normal",
+      "population": 121,
+      "households": 40,
+      "grain": 87422,
+      "harvest": 338122,
+      "consumed": 261360,
+      "hunger_days": 0,
+      "thirst_days": 0,
+      "villages": {
+        "upstream": {
+          "grain": 40396,
+          "harvest": 166776,
+          "hunger_days": 0
+        },
+        "downstream": {
+          "grain": 47026,
+          "harvest": 171346,
+          "hunger_days": 0
+        }
+      },
+      "state_hash": "7fcf334feb25520239fd6ed995d7f704816194991bb1c463bc0ad4a2c82de775",
+      "events": 49683
+    },
+    {
+      "day": 2520,
+      "years": 7.0,
+      "seed": 42,
+      "scenario": "normal",
+      "population": 121,
+      "households": 40,
+      "grain": 99790,
+      "harvest": 394290,
+      "consumed": 304920,
+      "hunger_days": 0,
+      "thirst_days": 0,
+      "villages": {
+        "upstream": {
+          "grain": 46019,
+          "harvest": 194479,
+          "hunger_days": 0
+        },
+        "downstream": {
+          "grain": 53771,
+          "harvest": 199811,
+          "hunger_days": 0
+        }
+      },
+      "state_hash": "f38092ac33ee5b84c013c79d52fd1de3ee4294433a684f2e86b6b56c5acaa1f7",
+      "events": 57963
+    },
+    {
+      "day": 2880,
+      "years": 8.0,
+      "seed": 42,
+      "scenario": "normal",
+      "population": 121,
+      "households": 40,
+      "grain": 111706,
+      "harvest": 450006,
+      "consumed": 348480,
+      "hunger_days": 0,
+      "thirst_days": 0,
+      "villages": {
+        "upstream": {
+          "grain": 51415,
+          "harvest": 221955,
+          "hunger_days": 0
+        },
+        "downstream": {
+          "grain": 60291,
+          "harvest": 228051,
+          "hunger_days": 0
+        }
+      },
+      "state_hash": "8dfce3a87ead1247117c779412af55e9a29b6649f1bedd32cb0bb3bf79ba8dd0",
+      "events": 66243
+    },
+    {
+      "day": 3240,
+      "years": 9.0,
+      "seed": 42,
+      "scenario": "normal",
+      "population": 121,
+      "households": 40,
+      "grain": 124310,
+      "harvest": 506410,
+      "consumed": 392040,
+      "hunger_days": 0,
+      "thirst_days": 0,
+      "villages": {
+        "upstream": {
+          "grain": 57155,
+          "harvest": 249775,
+          "hunger_days": 0
+        },
+        "downstream": {
+          "grain": 67155,
+          "harvest": 256635,
+          "hunger_days": 0
+        }
+      },
+      "state_hash": "6e9e42116dc0ac4d98055fe0ea889e7e972b01182f59513474c51a9f2c16aafb",
+      "events": 74523
+    },
+    {
+      "day": 3600,
+      "years": 10.0,
+      "seed": 42,
+      "scenario": "normal",
+      "population": 121,
+      "households": 40,
+      "grain": 136975,
+      "harvest": 562875,
+      "consumed": 435600,
+      "hunger_days": 0,
+      "thirst_days": 0,
+      "villages": {
+        "upstream": {
+          "grain": 62925,
+          "harvest": 277625,
+          "hunger_days": 0
+        },
+        "downstream": {
+          "grain": 74050,
+          "harvest": 285250,
+          "hunger_days": 0
+        }
+      },
+      "state_hash": "70dbb90e0629a19c0b70ed856f3fc4cec6c2fc5c938b61ac2dd153fd6ba63178",
+      "events": 82803
+    }
+  ],
+  "event_log": true
+}
