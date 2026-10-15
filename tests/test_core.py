@@ -17,14 +17,15 @@ class WorldTests(unittest.TestCase):
         self.assertTrue(observation["offers"])
         self.assertTrue(all(int(offer["household"][1:]) < 20 for offer in observation["offers"]))
         observation["home"]["grain"] = 0
-        self.assertEqual(world.state["households"]["h00"]["grain"], 400)
+        self.assertEqual(world.state["households"]["h00"]["grain"], 397)
+        self.assertEqual(world.state["households"]["h00"]["seed_grain"], 3)
 
     def test_transfer_and_trade_conserve_resources(self):
         for kind in ("transfer", "trade"):
             with self.subTest(kind=kind):
                 world = World()
                 world.act(Action("player", kind, "h01", 10))
-                expected = (390, 310) if kind == "transfer" else (410, 290)
+                expected = (387, 307) if kind == "transfer" else (407, 287)
                 self.assertEqual(tuple(world.state["households"][h]["grain"] for h in ("h00", "h01")), expected)
                 expected_coins = (200, 200) if kind == "transfer" else (190, 210)
                 self.assertEqual(tuple(world.state["households"][h]["coins"] for h in ("h00", "h01")), expected_coins)
@@ -48,6 +49,34 @@ class WorldTests(unittest.TestCase):
                     world.act(action)
                 self.assertEqual(world.state, before)
                 self.assertEqual((world.chain, world.sequence), (chain, count))
+
+    def test_sowing_requires_seed_reserve_and_failure_is_atomic(self):
+        world = World()
+        # Move the reserve into edible inventory without changing total grain.
+        home = world.state["households"]["h00"]
+        home["grain"] += 3
+        home["seed_grain"] -= 3
+        world.state["ledger"]["initial_edible_grain"] += 3
+        world.state["ledger"]["initial_seed_grain"] -= 3
+        world.assert_invariants()
+        before, chain, count = world.snapshot(), world.chain, world.sequence
+        with self.assertRaises(ActionError):
+            world.act(Action("p000", "produce"))
+        self.assertEqual(world.state, before)
+        self.assertEqual((world.chain, world.sequence), (chain, count))
+
+    def test_seed_reserve_survives_multiyear_drought_and_restores_sowing(self):
+        world = World(42, "drought")
+        world.advance(5 * 360)
+        homes = world.state["households"]
+        self.assertEqual(sum(home["grain"] for home in homes.values()), 0)
+        self.assertTrue(all(home["seed_grain"] == 3 for home in homes.values()))
+        world.set_rainfall(1000)
+        for index in range(40):
+            world.act(Action(f"p{index * 3:03d}", "produce"))
+        self.assertTrue(all(home["planted"] for home in homes.values()))
+        self.assertEqual(sum(home["seed_grain"] for home in homes.values()), 0)
+        world.assert_invariants()
 
     def test_npc_and_player_share_rules_and_daily_budget(self):
         world = World()
@@ -171,6 +200,31 @@ class WorldTests(unittest.TestCase):
         self.assertEqual(restored.chain, continuous.chain)
         self.assertEqual(replay(io.StringIO(prefix + continued_log.getvalue())).state, restored.state)
 
+    def test_legacy_snapshot_upgrade_preserves_total_grain(self):
+        state = World().snapshot()
+        for home in state["households"].values():
+            home["grain"] += home.pop("seed_grain")
+        state["version"] = 1
+        ledger = state["ledger"]
+        for key in ("initial_edible_grain", "initial_seed_grain", "harvest_food",
+                    "harvest_seed", "legacy_seed_used", "seed_transferred"):
+            ledger.pop(key)
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "legacy.json"
+            genesis = dict(id=0, day=0, kind="genesis", actor=None, cause=None,
+                           details={}, state=state, previous_hash="")
+            genesis["hash"] = digest(genesis)
+            path.write_text(json.dumps(dict(state=state, sequence=1, chain=genesis["hash"])))
+            prefix = json.dumps(genesis) + "\n"
+            segment = io.StringIO()
+            restored = World.load(path, segment)
+            self.assertEqual(sum(h["grain"] + h["seed_grain"]
+                                 for h in restored.state["households"].values()), 12100)
+            restored.advance(1)
+        self.assertEqual(restored.state["version"], 2)
+        restored.assert_invariants()
+        self.assertEqual(replay(io.StringIO(prefix + segment.getvalue())).state, restored.state)
+
     def test_seasons_and_drought_window(self):
         normal, dry = World(42), World(42, "drought")
         for day in (0, 719, 720, 1799, 1800):
@@ -194,6 +248,13 @@ class WorldTests(unittest.TestCase):
                 self.assertGreater(world.sequence, 6 * 360)
                 if scenario == "drought":
                     self.assertGreater(world.summary()["hunger_days"], 0)
+                self.assertEqual(sum(h["grain"] + h["seed_grain"]
+                                     for h in world.state["households"].values()),
+                                 world.state["ledger"]["initial_grain"]
+                                 + world.state["ledger"]["harvest"]
+                                 - world.state["ledger"]["consumed"]
+                                 - world.state["ledger"]["legacy_seed_used"]
+                                 - world.state["ledger"]["seed_used"])
 
 
 if __name__ == "__main__":

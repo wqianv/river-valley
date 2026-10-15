@@ -44,7 +44,7 @@ def set_path(state, path, value):
 
 
 class World:
-    """All food belongs to households; coins and water have explicit ledgers.
+    """Food belongs to households, with edible and seed grain kept separately.
 
     Crop biomass is in thousandths of a grain unit. A person consumes one grain
     unit/day. Water refreshes daily; its unused portion exits via river/canals.
@@ -56,13 +56,15 @@ class World:
             raise ValueError("integer seed and normal/drought scenario required")
         rng = random.Random(seed)
         households, people = {}, {}
+        initial_seed = 0
         for index in range(40):
             hid = f"h{index:02d}"
             village = VILLAGES[index // 20]
-            households[hid] = dict(village=village, grain=300, coins=200,
+            households[hid] = dict(village=village, grain=297, seed_grain=3, coins=200,
                                    land=3, soil=rng.randint(900, 1100),
                                    crop=0, planted=False, labor=0, labor_source=-1, hunger=0,
                                    harvested=0, consumed=0, donated=0)
+            initial_seed += 3
             for slot, role in enumerate(("farmer", "trader", "carer")):
                 pid = f"p{index * 3 + slot:03d}"
                 people[pid] = dict(household=hid, location=village, role=role,
@@ -71,7 +73,7 @@ class World:
                                  role="player", last_action=-1, need=1)
         # Starting food is 100 days/person, including the additional player.
         households["h00"]["grain"] += 100
-        self.state = dict(version=1, seed=seed, scenario=scenario, day=0,
+        self.state = dict(version=2, seed=seed, scenario=scenario, day=0,
                           season="spring", households=households, people=people,
                           river=dict(rainfall=0, inflow=0, diversion=0,
                                      upstream=0, downstream=0, outlet=0,
@@ -79,8 +81,13 @@ class World:
                                      unmet_drinking=0),
                           climate=dict(rainfall_override=None),
                           sources=dict(rainfall=None, diversion=None),
-                          ledger=dict(initial_grain=12100, initial_coins=8000,
-                                      harvest=0, consumed=0, seed_used=0,
+                          ledger=dict(initial_grain=12100,
+                                      initial_edible_grain=12100 - initial_seed,
+                                      initial_seed_grain=initial_seed,
+                                      initial_coins=8000,
+                                      harvest=0, harvest_food=0, harvest_seed=0,
+                                      consumed=0, seed_used=0, legacy_seed_used=0,
+                                      seed_transferred=0,
                                       water_in=0, water_drunk=0, water_irrigated=0,
                                       water_out=0, water_canal=0),
                           totals=dict(hunger_days=0, thirst_days=0))
@@ -161,9 +168,9 @@ class World:
                 if day % 180 >= 90 or home["labor"] >= 1:
                     raise ActionError("outside growing season or land already tended")
                 if not home["planted"]:
-                    if day % 180 >= 30 or home["grain"] < 3:
-                        raise ActionError("planting needs 3 grain and an open planting window")
-                    updates += [(("households", hid, "grain"), home["grain"] - 3),
+                    if day % 180 >= 30 or home["seed_grain"] < 3:
+                        raise ActionError("planting needs 3 reserved seed grain and an open planting window")
+                    updates += [(("households", hid, "seed_grain"), home["seed_grain"] - 3),
                                 (("households", hid, "planted"), True),
                                 (("ledger", "seed_used"), self.state["ledger"]["seed_used"] + 3)]
                 updates.append((("households", hid, "labor"), 1))
@@ -222,7 +229,7 @@ class World:
                 action, reason = Action(pid, "move", home["village"]), "return to household supplies"
             elif person["role"] == "farmer" and self.state["day"] % 180 < 90:
                 if home["labor"] == 0 and (home["planted"] or
-                                          (self.state["day"] % 180 < 30 and home["grain"] >= 3)):
+                                          (self.state["day"] % 180 < 30 and home["seed_grain"] >= 3)):
                     action, reason = Action(pid, "produce"), "local land needs seasonal labor"
             elif person["role"] == "trader" and home["grain"] < 90 and home["coins"] > 0:
                 if view["offers"]:
@@ -288,7 +295,8 @@ class World:
                                  details=dict(source="rainfall and sluice", rainfall=rainfall,
                                               diversion=river["diversion"], allocations=values,
                                               input_events=deepcopy(self.state["sources"])))
-        updates, harvested, consumed, hungry = [], 0, 0, 0
+        updates, harvested, harvest_food, harvest_seed = [], 0, 0, 0
+        consumed, hungry, seed_transferred = 0, 0, 0
         growth_sources = {}
         harvest_day = self.state["day"] % 180 == 89
         for hid, home in self.state["households"].items():
@@ -302,28 +310,46 @@ class World:
                 growth_sources[hid] = dict(growth=growth, labor_event=home["labor_source"],
                                            water_event=water_event)
             grain = home["grain"]
+            seed_grain = home["seed_grain"]
             if harvest_day and home["planted"]:
                 amount = crop // 1000
                 harvested += amount
-                grain += amount
+                seed_amount = min(amount, max(0, 3 - seed_grain))
+                seed_grain += seed_amount
+                harvest_seed += seed_amount
+                harvest_food += amount - seed_amount
+                grain += amount - seed_amount
                 crop = 0
                 updates += [(("households", hid, "planted"), False),
                             (("households", hid, "harvested"), home["harvested"] + amount)]
+            # Preserve up to one 3-unit sowing ration before food consumption.
+            # Harvest fills the reserve first; edible stock tops it up after a
+            # poor harvest, so the daily food debit cannot consume it.
+            transfer = min(max(0, 3 - seed_grain), grain)
+            seed_grain += transfer
+            grain -= transfer
+            seed_transferred += transfer
             eaten = min(grain, members[hid])
             shortage = members[hid] - eaten
             consumed += eaten
             hungry += shortage
             updates += [(("households", hid, "grain"), grain - eaten),
+                        (("households", hid, "seed_grain"), seed_grain),
                         (("households", hid, "crop"), crop),
                         (("households", hid, "labor"), 0),
                         (("households", hid, "consumed"), home["consumed"] + eaten),
                         (("households", hid, "hunger"), home["hunger"] + shortage)]
         updates += [(("ledger", "harvest"), ledger["harvest"] + harvested),
+                    (("ledger", "harvest_food"), ledger["harvest_food"] + harvest_food),
+                    (("ledger", "harvest_seed"), ledger["harvest_seed"] + harvest_seed),
                     (("ledger", "consumed"), ledger["consumed"] + consumed),
+                    (("ledger", "seed_transferred"), ledger["seed_transferred"] + seed_transferred),
                     (("totals", "hunger_days"), self.state["totals"]["hunger_days"] + hungry)]
         self._emit("agriculture_and_consumption", updates, cause=water_event,
                    details=dict(growth_source="planted land + labor + soil + irrigation",
-                                harvest=harvested, consumed=consumed, unmet_food=hungry,
+                                harvest=harvested, harvest_food=harvest_food,
+                                harvest_seed=harvest_seed, seed_transferred=seed_transferred,
+                                consumed=consumed, unmet_food=hungry,
                                 harvest_day=harvest_day, growth_sources=growth_sources))
         day = self.state["day"] + 1
         self._emit("clock", [(('day',), day),
@@ -339,13 +365,24 @@ class World:
     def assert_invariants(self):
         ledger = self.state["ledger"]
         homes = self.state["households"].values()
+        homes = list(homes)
         for home in homes:
-            for key in ("grain", "coins", "crop", "hunger", "consumed", "harvested"):
+            for key in ("grain", "seed_grain", "coins", "crop", "hunger", "consumed", "harvested"):
                 if type(home[key]) is not int or home[key] < 0:
                     raise AssertionError(f"invalid household {key}")
-        if sum(h["grain"] for h in homes) != (ledger["initial_grain"] + ledger["harvest"]
-                                                - ledger["consumed"] - ledger["seed_used"]):
-            raise AssertionError("food conservation violated")
+        if sum(h["grain"] for h in homes) != (
+                ledger["initial_edible_grain"] + ledger["harvest_food"]
+                - ledger["consumed"] - ledger["seed_transferred"]
+                - ledger["legacy_seed_used"]):
+            raise AssertionError("edible grain conservation violated")
+        if sum(h["seed_grain"] for h in homes) != (
+                ledger["initial_seed_grain"] + ledger["harvest_seed"]
+                + ledger["seed_transferred"] - ledger["seed_used"]):
+            raise AssertionError("seed grain conservation violated")
+        if sum(h["grain"] + h["seed_grain"] for h in homes) != (
+                ledger["initial_grain"] + ledger["harvest"] - ledger["consumed"]
+                - ledger["legacy_seed_used"] - ledger["seed_used"]):
+            raise AssertionError("total grain conservation violated")
         if sum(h["coins"] for h in homes) != ledger["initial_coins"]:
             raise AssertionError("coin conservation violated")
         if ledger["water_in"] != sum(ledger[k] for k in
@@ -364,6 +401,7 @@ class World:
                     seed=self.state["seed"], scenario=self.state["scenario"],
                     population=len(self.state["people"]), households=40,
                     grain=sum(h["grain"] for h in self.state["households"].values()),
+                    seed_grain=sum(h["seed_grain"] for h in self.state["households"].values()),
                     harvest=self.state["ledger"]["harvest"],
                     consumed=self.state["ledger"]["consumed"],
                     hunger_days=self.state["totals"]["hunger_days"],
@@ -385,14 +423,22 @@ class World:
     def load(cls, path, event_sink=None):
         with open(path, encoding="utf-8") as file:
             saved = json.load(file)
-        if saved["state"]["version"] != 1:
+        if saved["state"]["version"] not in (1, 2):
             raise ValueError("unsupported save version")
         world = cls.__new__(cls)
         world.state = saved["state"]
+        legacy_state = deepcopy(world.state) if world.state.get("version") == 1 else None
+        _upgrade_seed_ledger(world.state)
         world.sequence, world.chain = saved["sequence"], saved["chain"]
         world.events = deque(maxlen=500)
         world.event_sink = event_sink
         world.assert_invariants()
+        if legacy_state is not None and event_sink is not None:
+            world._write(dict(id=world.sequence, day=world.state["day"],
+                              kind="schema_upgrade", actor=None, cause=None,
+                              details=dict(from_version=1, to_version=2,
+                                           previous_state_hash=digest(legacy_state)),
+                              state=deepcopy(world.state)))
         return world
 
 
@@ -413,6 +459,11 @@ def replay(lines, until_day=None):
             if event["kind"] != "genesis":
                 raise ValueError("full replay requires genesis")
             state = event["state"]
+        elif event["kind"] == "schema_upgrade":
+            if event["day"] != state["day"] or event["details"].get(
+                    "previous_state_hash") != digest(state):
+                raise ValueError("invalid state migration event")
+            state = event["state"]
         else:
             if event["day"] != state["day"]:
                 raise ValueError("event day mismatch")
@@ -428,8 +479,31 @@ def replay(lines, until_day=None):
         raise ValueError("empty log")
     if until_day is not None and state["day"] != until_day:
         raise ValueError("requested day is beyond the log")
+    _upgrade_seed_ledger(state)
     world = World.__new__(World)
     world.state, world.sequence, world.chain = state, count, previous
     world.events, world.event_sink = deque(maxlen=500), None
     world.assert_invariants()
     return world
+
+
+def _upgrade_seed_ledger(state):
+    """Migrate v1 snapshots/replays while preserving every grain unit."""
+    if state.get("version") == 2:
+        return
+    if state.get("version") != 1:
+        raise ValueError("unsupported state version")
+    ledger = state["ledger"]
+    initial_seed = 0
+    for home in state["households"].values():
+        reserve = min(3, home["grain"])
+        home["grain"] -= reserve
+        home["seed_grain"] = reserve
+        initial_seed += reserve
+    legacy_seed_used = ledger["seed_used"]
+    ledger.update(initial_edible_grain=ledger["initial_grain"] - initial_seed,
+                  initial_seed_grain=initial_seed,
+                  harvest_food=ledger["harvest"], harvest_seed=0,
+                  legacy_seed_used=legacy_seed_used, seed_transferred=0,
+                  seed_used=0)
+    state["version"] = 2
